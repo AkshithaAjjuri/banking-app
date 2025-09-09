@@ -1,39 +1,16 @@
 import express from "express";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@as-integrations/express5";
-import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import { typeDefs, resolvers } from "./graphql/schema.js";
+import { authMiddleware } from "./middleWare/authMiddleWare.js";
+import User from "./models/User.js";
 
 dotenv.config();
 
 const app = express();
-app.use(cors());
 app.use(express.json());
-
-// MongoDB connection
-const connectToMongoDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URL);
-    console.log("MongoDB Connected");
-  } catch (err) {
-    console.error("MongoDB connection error:", err);
-    process.exit(1);
-  }
-};
-
-// Apollo setup
-const typeDefs = `
-  type Query {
-    hello: String
-  }
-`;
-
-const resolvers = {
-  Query: {
-    hello: () => "Hello Banking App Backend",
-  },
-};
 
 const server = new ApolloServer({
   typeDefs,
@@ -41,22 +18,28 @@ const server = new ApolloServer({
 });
 
 const startServer = async () => {
-  await connectToMongoDB();
   await server.start();
 
   app.use(
     "/graphql",
-    cors(),
-    express.json(),
-    expressMiddleware(server)
+    expressMiddleware(server, {
+      context: async ({ req, res }) => {
+        // Since authMiddleware is middleware, let's call it manually and wait for it:
+          authMiddleware(req, res, () => {});
+        return { user: req.user };
+      },
+    })
   );
 
-  const PORT = process.env.PORT || 4000;
-  app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}/graphql`);
-  });
-};
+mongoose.connect(process.env.MONGO_URL)
+    .then(()=>{
+      console.log("Connected to MongoDB");
+    const PORT = process.env.PORT || 4000;
+    app.listen(PORT, () => {
+      console.log(`Server is ready at http://localhost:${PORT}/graphql`);
+    })
+  })
+     .catch (err => console.error("MongoDB connection error:", err));
+     }
 
-startServer().catch((err) => {
-  console.error("Server failed to start:", err);
-});
+startServer();
