@@ -5,8 +5,8 @@ import dotenv from "dotenv";
 import accountRoutes from "./routes/accountRoutes.js"
 import mongoose from "mongoose";
 import { typeDefs, resolvers } from "./graphql/schema.js";
-import { authMiddleware } from "./middleWare/authMiddleWare.js";
-import User from "./models/User.js";
+import { authMiddleware } from "./middleWare/authMiddleware.js";
+import LoanRoutes from "./routes/loanRoutes.js"
 
 dotenv.config();
 
@@ -24,6 +24,7 @@ const startServer = async () => {
 
 
 app.use("/api/accounts",accountRoutes)
+app.use("/api/loans",LoanRoutes)
   app.use(
     "/graphql",
     expressMiddleware(server, {

@@ -11,6 +11,7 @@ const transactonSchema= new mongoose.Schema({
         enum:["deposit","withdraw","transfer"],
         required:true
     },
+    
     amount:{
         type:Number,
         required:true,
@@ -38,6 +39,11 @@ const accountSchema =new mongoose.Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:"User",
         required:true
+    },
+    balance:{
+        type:Number,
+        default:0,
+        required:true,
     },
     type:{
         type:String,
